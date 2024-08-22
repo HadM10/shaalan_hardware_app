@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'database_helper.dart'; // Assuming this is your DatabaseHelper file
 
 Future<void> syncUsers() async {
-  final url = 'http://192.168.1.3/shaalan_catalogue/api/get_users.php'; // Replace with your server URL
+  final url = 'http://192.168.1.4/shaalan_catalogue/api/get_users.php'; // Replace with your server URL
   try {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {

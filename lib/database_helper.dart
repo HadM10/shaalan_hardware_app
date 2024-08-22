@@ -74,8 +74,6 @@ class DatabaseHelper {
   }
 
 
-
-
   Future<bool> checkCredentials(String username, String password) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(

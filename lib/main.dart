@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home.dart';
 import 'sign_in.dart'; // Import your SignInPage file
 import 'sync_service.dart'; // Import the sync service file
 import 'package:google_fonts/google_fonts.dart';
@@ -28,7 +29,10 @@ class MyApp extends StatelessWidget {
           ) // You can define your color theme here
       ),
       home: const SignInPage(), // Set SignInPage as the initial page
-      debugShowCheckedModeBanner: false, // Hide the debug banner
+      debugShowCheckedModeBanner: false,
+      routes: {
+        '/home': (context) => HomePage(), // Register the HomePage route
+      },// Hide the debug banner
     );
   }
 }

@@ -29,7 +29,7 @@ class _SignInPageState extends State<SignInPage> {
         SnackBar(content: Text('Login successful')),
       );
       // Navigate to another page if needed, e.g.,
-      // Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/home');
     } else {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
