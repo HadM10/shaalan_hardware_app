@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'database_helper.dart';
 
 class HomePage extends StatelessWidget {
   @override
@@ -43,52 +45,89 @@ class HomePage extends StatelessWidget {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding:  EdgeInsets.all(8.0),
               child: TextField(
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: Colors.grey[800],
+                  fillColor: Colors.red[900],
                   prefixIcon: const Icon(Icons.search, color: Colors.white),
                   hintText: 'Type something',
-                  hintStyle: const TextStyle(color: Colors.white),
+                  hintStyle: TextStyle(color: Colors.white, fontSize: isSmallScreen
+                      ? 12.0
+                      : isMediumScreen
+                      ? 16.0
+                      : 22.0 ),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
                     onPressed: () {
                       // Clear search input
                     },
                   ),
+
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                     borderSide: BorderSide.none,
                   ),
                 ),
+
               ),
             ),
-            Container(
+      Padding(
+        padding:  EdgeInsets.all(8.0), child : Container(
               height: 50,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  _buildCategoryChip('Sprayer'),
-                  _buildCategoryChip('Cutting'),
-                  _buildCategoryChip('Motors'),
-                  _buildCategoryChip('Products'),
-                  // Add more categories as needed
-                ],
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: DatabaseHelper().fetchCategories(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No categories available'));
+                  } else {
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: snapshot.data!.map((category) {
+                        return _buildCategoryChip(context, category['category_name']);
+                      }).toList(),
+                    );
+                  }
+                },
               ),
             ),
+      ),
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16.0),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: 8.0,
-                  mainAxisSpacing: 8.0,
-                  childAspectRatio: 1, // Adjust as needed
-                ),
-                itemCount: 6, // Update with actual number of products
-                itemBuilder: (context, index) {
-                  return _buildProductCard(context, index);
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: DatabaseHelper().fetchProducts(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No products available'));
+                  } else {
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 8.0,
+                        mainAxisSpacing: 8.0,
+                        childAspectRatio: 1, // Adjust as needed
+                      ),
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) {
+                        final product = snapshot.data![index];
+                        return _buildProductCard(
+                          context,
+                          product['product_name'],
+                          product['image_url'],
+                          product['category_id'],
+                        );
+                      },
+                    );
+                  }
                 },
               ),
             ),
@@ -98,23 +137,34 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryChip(String category) {
+  Widget _buildCategoryChip(BuildContext context, String category) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 600;
+    final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
+    final isLargeScreen = screenWidth >= 900;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: Chip(
         label: Text(category),
         backgroundColor: Colors.grey[800],
-        labelStyle: const TextStyle(color: Colors.white),
-        onDeleted: () {
-          // Handle category removal
-        },
+        labelStyle:  TextStyle(color: Colors.white, fontSize: isSmallScreen
+            ? 12.0
+            : isMediumScreen
+            ? 16.0
+            : 18.0),
+        side: BorderSide.none,
       ),
     );
   }
 
-  Widget _buildProductCard(BuildContext context, int index) {
+  Widget _buildProductCard(
+      BuildContext context,
+      String productName,
+      String imageUrl,
+      int categoryId,
+      ) {
     return Card(
-      color: Colors.grey[800],
+      color: Colors.red[900],
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -122,26 +172,32 @@ class HomePage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Image.asset(
-              'assets/product_$index.png',
+            child: imageUrl.isNotEmpty
+                ? CachedNetworkImage(
+              imageUrl: imageUrl,
               fit: BoxFit.cover,
               width: double.infinity,
+              placeholder: (context, url) => Center(
+                child: CircularProgressIndicator(),
+              ),
+              errorWidget: (context, url, error) => Center(
+                child: Text('No Image', style: TextStyle(color: Colors.white)),
+              ),
+            )
+                : Container(
+              color: Colors.grey,
+              width: double.infinity,
+              child: Center(child: Text('No Image')),
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
-              'Product Name $index',
+              productName,
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text(
-              'Product Description $index',
-              style: TextStyle(color: Colors.grey[400], fontSize: 12),
-            ),
-          ),
+
         ],
       ),
     );
