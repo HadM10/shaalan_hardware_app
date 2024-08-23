@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences for local storage
 import 'database_helper.dart'; // Import the database helper
 
 class SignInPage extends StatefulWidget {
@@ -19,16 +20,19 @@ class _SignInPageState extends State<SignInPage> {
     final username = _usernameController.text;
     final password = _passwordController.text;
 
-    await  _dbHelper.printUsers();
+    await _dbHelper.printUsers();
 
     final isValid = await _dbHelper.checkCredentials(username, password);
 
     if (isValid) {
+      // Save login status in shared preferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isLoggedIn', true);
+
       // Handle successful login (e.g., navigate to another page)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login successful')),
       );
-      // Navigate to another page if needed, e.g.,
       Navigator.pushReplacementNamed(context, '/home');
     } else {
       // Show error message
@@ -188,35 +192,35 @@ class _SignInPageState extends State<SignInPage> {
                                           vertical: 16.0, horizontal: 16.0),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                            SizedBox(
-                              width: isLargeScreen
-                                  ? 400
-                                  : isMediumScreen
-                                  ? 350
-                                  : double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF010101),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 50,
+                                    child: ElevatedButton(
+                                      onPressed: _handleLogin,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.black87,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Sign In',
+                                        style: TextStyle(
+                                          fontSize: isLargeScreen
+                                              ? 20
+                                              : isMediumScreen
+                                              ? 20
+                                              : 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                onPressed: _handleLogin,
-                                child: Text(
-                                  'Log in',
-                                  style: TextStyle(
-                                      fontSize: isLargeScreen
-                                          ? 20
-                                          : isMediumScreen
-                                          ? 20
-                                          : 18,
-                                      color: Colors.white),
-                                ),
+                                  const SizedBox(height: 20),
+
+                                ],
                               ),
                             ),
                           ],

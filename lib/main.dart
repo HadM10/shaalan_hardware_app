@@ -4,6 +4,7 @@ import 'sign_in.dart'; // Import the SignInPage widget
 import 'sync_service.dart'; // Import the sync service file for various synchronization tasks
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts for custom fonts
 import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivity package to check internet status
+import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences for persisting user login status
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized before performing async operations
@@ -20,11 +21,17 @@ void main() async {
     print('No internet connection. Running offline.');
   }
 
-  runApp(const MyApp()); // Run the app
+  // Check if user is signed in
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+  runApp(MyApp(isLoggedIn: isLoggedIn)); // Run the app with the login status
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final bool isLoggedIn;
+
+  const MyApp({Key? key, required this.isLoggedIn}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +48,11 @@ class MyApp extends StatelessWidget {
           selectionHandleColor: Colors.black45, // Color of the text selection handle
         ),
       ),
-      home: const SignInPage(), // Set SignInPage as the initial page
+      home: isLoggedIn ? HomePage() : const SignInPage(), // Check if user is logged in
       debugShowCheckedModeBanner: false, // Remove the debug banner
       routes: {
-        '/home': (context) => HomePage(), // Register the route for HomePage
+        '/home': (context) => HomePage(),
+        '/login': (context) => SignInPage(),// Register the route for HomePage
       },
     );
   }

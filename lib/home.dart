@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import for local storage management
 import 'database_helper.dart';
 
 class HomePage extends StatelessWidget {
+  Future<void> _handleLogout(BuildContext context) async {
+    // Clear login status from shared preferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn'); // Or set to false, depending on your implementation
+
+    // Navigate back to the login screen
+    Navigator.pushReplacementNamed(context, '/login'); // Adjust the route as per your app's routing
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -26,11 +36,7 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.black12, // Set background color to black
         appBar: AppBar(
           backgroundColor: Colors.black54,
-          toolbarHeight: isSmallScreen
-              ? 120
-              : isMediumScreen
-              ? 200
-              : 200,
+          toolbarHeight: isSmallScreen ? 120 : isMediumScreen ? 200 : 200,
           title: Center(
             child: Image.asset(
               'assets/shaalan1.jpg',
@@ -41,11 +47,33 @@ class HomePage extends StatelessWidget {
                   : 200,
             ),
           ),
+            actions: [
+        Padding(
+        padding: EdgeInsets.only(right: isSmallScreen
+        ? 8.0 // Padding for small screens
+            : isMediumScreen
+        ? 16.0 // Padding for medium screens
+            : 24.0), // Padding for large screens
+        child:
+            IconButton(
+              icon: Icon(
+                Icons.logout,
+                color: Colors.white, // Set the icon color to white
+                size: isSmallScreen
+                    ? 30.0 // Size for small screens
+                    : isMediumScreen
+                    ? 40.0 // Size for medium screens
+                    : 45.0, // Size for large screens
+              ),
+              onPressed: () => _handleLogout(context), // Logout action
+            ),
+        )
+          ],
         ),
         body: Column(
           children: [
             Padding(
-              padding:  EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.0),
               child: TextField(
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
@@ -53,50 +81,53 @@ class HomePage extends StatelessWidget {
                   fillColor: Colors.red[900],
                   prefixIcon: const Icon(Icons.search, color: Colors.white),
                   hintText: 'Type something',
-                  hintStyle: TextStyle(color: Colors.white, fontSize: isSmallScreen
-                      ? 12.0
-                      : isMediumScreen
-                      ? 16.0
-                      : 22.0 ),
+                  hintStyle: TextStyle(
+                    color: Colors.white,
+                    fontSize: isSmallScreen
+                        ? 12.0
+                        : isMediumScreen
+                        ? 16.0
+                        : 22.0,
+                  ),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
                     onPressed: () {
                       // Clear search input
                     },
                   ),
-
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                     borderSide: BorderSide.none,
                   ),
                 ),
-
               ),
             ),
-      Padding(
-        padding:  EdgeInsets.all(8.0), child : Container(
-              height: 50,
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: DatabaseHelper().fetchCategories(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No categories available'));
-                  } else {
-                    return ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: snapshot.data!.map((category) {
-                        return _buildCategoryChip(context, category['category_name']);
-                      }).toList(),
-                    );
-                  }
-                },
+            Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Container(
+                height: 50,
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: DatabaseHelper().fetchCategories(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(child: Text('No categories available'));
+                    } else {
+                      return ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: snapshot.data!.map((category) {
+                          return _buildCategoryChip(
+                              context, category['category_name']);
+                        }).toList(),
+                      );
+                    }
+                  },
+                ),
               ),
             ),
-      ),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: DatabaseHelper().fetchProducts(),
@@ -147,11 +178,14 @@ class HomePage extends StatelessWidget {
       child: Chip(
         label: Text(category),
         backgroundColor: Colors.grey[800],
-        labelStyle:  TextStyle(color: Colors.white, fontSize: isSmallScreen
-            ? 12.0
-            : isMediumScreen
-            ? 16.0
-            : 18.0),
+        labelStyle: TextStyle(
+          color: Colors.white,
+          fontSize: isSmallScreen
+              ? 12.0
+              : isMediumScreen
+              ? 16.0
+              : 18.0,
+        ),
         side: BorderSide.none,
       ),
     );
@@ -177,9 +211,8 @@ class HomePage extends StatelessWidget {
               imageUrl: imageUrl,
               fit: BoxFit.cover,
               width: double.infinity,
-              placeholder: (context, url) => Center(
-                child: CircularProgressIndicator(),
-              ),
+              placeholder: (context, url) =>
+                  Center(child: CircularProgressIndicator()),
               errorWidget: (context, url, error) => Center(
                 child: Text('No Image', style: TextStyle(color: Colors.white)),
               ),
@@ -197,7 +230,6 @@ class HomePage extends StatelessWidget {
               style: const TextStyle(color: Colors.white),
             ),
           ),
-
         ],
       ),
     );
