@@ -55,12 +55,14 @@ Future<void> syncCategories() async {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         List<dynamic> categories = jsonDecode(response.body);
+        print('Fetched categories: $categories'); // Debug print
 
         // Fetch local categories
         List<Map<String, dynamic>> localCategories = await DatabaseHelper().fetchCategories();
+        print('Local categories before sync: $localCategories'); // Debug print
 
         for (var category in categories) {
-          int categoryId = int.parse(category['category_id']);
+          int categoryId =  category['category_id'] is int ? category['category_id'] : int.parse(category['category_id'].toString());
           String categoryName = category['category_name'];
 
           // Check if the category exists locally
@@ -86,7 +88,7 @@ Future<void> syncCategories() async {
         await DatabaseHelper().printCategories();
         print('Categories synced successfully');
       } else {
-        print('Failed to fetch categories');
+        print('Failed to fetch categories. Status code: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
@@ -95,6 +97,7 @@ Future<void> syncCategories() async {
     print('No internet connection. Running offline.');
   }
 }
+
 
 Future<void> syncProducts() async {
   var connectivityResult = await Connectivity().checkConnectivity();

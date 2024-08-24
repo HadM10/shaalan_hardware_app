@@ -111,8 +111,14 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> fetchCategories() async {
     final db = await database;
-    return await db.query('categories');
+    try {
+      return await db.query('categories');
+    } catch (e) {
+      throw Exception('Error fetching categories: $e');
+    }
   }
+
+
 
   Future<void> updateCategory(int categoryId, String categoryName) async {
     final db = await database;
@@ -156,10 +162,46 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<Map<String, dynamic>>> fetchProducts() async {
+  Future<List<Map<String, dynamic>>> fetchProducts({
+    String? searchQuery,
+    int? categoryId,
+    bool? isNewCollection, // Parameter for filtering by new collection
+  }) async {
     final db = await database;
-    return await db.query('products');
+
+    // Building the WHERE clause and arguments dynamically
+    String whereClause = 'archived = 0'; // Filter out archived products
+    List<dynamic> whereArgs = [];
+
+    // Add filter for search query
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      whereClause += " AND product_name LIKE ?";
+      whereArgs.add('%$searchQuery%');
+    }
+
+    // Add filter for category ID
+    if (categoryId != null) {
+      whereClause += " AND category_id = ?";
+      whereArgs.add(categoryId);
+    }
+
+    // Add filter for new collection
+    if (isNewCollection != null) {
+      whereClause += " AND new_collection = ?";
+      whereArgs.add(isNewCollection ? 1 : 0);
+    }
+
+    // Query the database with the dynamic WHERE clause and arguments
+    final List<Map<String, dynamic>> maps = await db.query(
+      'products',
+      where: whereClause,
+      whereArgs: whereArgs.isNotEmpty ? whereArgs : null,
+    );
+
+    return maps;
   }
+
+
 
   Future<void> updateProduct(int productId, String productName, int categoryId, String imageUrl, int archived, int newCollection) async {
     final db = await database;
@@ -225,16 +267,10 @@ class DatabaseHelper {
 
   Future<void> printCategories() async {
     final db = await database;
-    final List<Map<String, dynamic>> categories = await db.query('categories');
-
-    if (categories.isEmpty) {
-      print('No categories found in the database.');
-    } else {
-      for (var category in categories) {
-        print('Category ID: ${category['category_id']}, Category Name: ${category['category_name']}');
-      }
-    }
+    List<Map<String, dynamic>> categories = await db.query('categories');
+    print('Categories in database: $categories');
   }
+
 
   Future<void> printProducts() async {
     final db = await database;
