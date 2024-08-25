@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
 
 Future<void> syncUsers() async {
@@ -15,6 +16,9 @@ Future<void> syncUsers() async {
         // Fetch local users
         List<Map<String, dynamic>> localUsers = await DatabaseHelper().fetchUsers();
 
+        print('Remote Users: $users'); // Debug print
+        print('Local Users: $localUsers'); // Debug print
+
         for (var user in users) {
           int userId = int.parse(user['user_id']);
           String username = user['username'];
@@ -26,9 +30,11 @@ Future<void> syncUsers() async {
 
           if (exists) {
             // Update existing user
+            print('Updating user $userId with status $status'); // Debug print
             await DatabaseHelper().updateUserStatus(userId, status);
           } else {
             // Insert new user
+            print('Inserting new user $userId with status $status'); // Debug print
             await DatabaseHelper().insertUser(userId, username, password, status);
           }
         }
@@ -36,6 +42,9 @@ Future<void> syncUsers() async {
         // Optionally print users after syncing
         await DatabaseHelper().printUsers();
         print('Users synced successfully');
+
+        // Check for blocked users and handle them
+        await handleBlockedUsers();
       } else {
         print('Failed to fetch users');
       }
@@ -46,6 +55,31 @@ Future<void> syncUsers() async {
     print('No internet connection. Running offline.');
   }
 }
+
+
+Future<void> handleBlockedUsers() async {
+  // Fetch local users
+  List<Map<String, dynamic>> localUsers = await DatabaseHelper().fetchUsers();
+
+  for (var user in localUsers) {
+    String status = user['status'];
+
+    if (status == 'blocked') {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? currentUsername = prefs.getString('username');
+      if (currentUsername != null && user['username'] == currentUsername) {
+        // Remove login status and navigate to login page
+        await prefs.remove('isLoggedIn');
+        await prefs.remove('username');
+        // Optionally clear other user-specific data
+        // Navigate to login screen
+        // Navigator.pushReplacementNamed(context, '/login');
+        print('User ${user['username']} is blocked. Logging out.');
+      }
+    }
+  }
+}
+
 
 Future<void> syncCategories() async {
   var connectivityResult = await Connectivity().checkConnectivity();

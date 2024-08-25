@@ -7,16 +7,16 @@ import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivit
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences for persisting user login status
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized before performing async operations
+  WidgetsFlutterBinding.ensureInitialized();
 
   // Check for internet connectivity
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult != ConnectivityResult.none) {
     // If there is an internet connection, sync various data
-    await syncUsers(); // Sync users with the local database
-    await syncProducts(); // Sync products with the local database
-    await syncCategories(); // Sync categories with the local database
-    // Add additional sync functions as needed
+    await syncUsers();
+    await syncProducts();
+    await syncCategories();
+    await handleBlockedUsers(); // Check and handle if user is blocked
   } else {
     print('No internet connection. Running offline.');
   }
@@ -25,7 +25,7 @@ void main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-  runApp(MyApp(isLoggedIn: isLoggedIn)); // Run the app with the login status
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatelessWidget {

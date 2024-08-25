@@ -1,4 +1,5 @@
 import 'package:flutter_bcrypt/flutter_bcrypt.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -228,7 +229,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<bool> checkCredentials(String username, String password) async {
+  Future<Map<String, dynamic>> checkCredentials(String username, String password) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'users',
@@ -237,20 +238,45 @@ class DatabaseHelper {
     );
 
     if (maps.isNotEmpty) {
-      final hashedPassword = maps.first['password'] as String;
+      final user = maps.first;
+      final hashedPassword = user['password'] as String;
+      final status = user['status'] as String;
 
-      print('Stored Hash: $hashedPassword');
-      print('Password Entered: $password');
-
-      // Check if the provided password matches the stored hash
       bool isMatch = await FlutterBcrypt.verify(password: password, hash: hashedPassword);
-      print('Password check result: $isMatch');
-      return isMatch;
+
+      if (isMatch) {
+        return {'valid': true, 'status': status}; // Credentials are correct
+      } else {
+        return {'valid': false, 'status': 'invalid_password'}; // Wrong password
+      }
     }
 
-    // No user found with that username
-    return false;
+    return {'valid': false, 'status': 'user_not_found'}; // User not found
   }
+
+  Future<String> getUserStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('username'); // Assuming you store the username in SharedPreferences
+
+    if (username == null) {
+      return 'unknown';
+    }
+
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+
+    if (maps.isNotEmpty) {
+      final user = maps.first;
+      return user['status'] as String;
+    }
+
+    return 'user_not_found';
+  }
+
 
   Future<void> printUsers() async {
     final db = await database;

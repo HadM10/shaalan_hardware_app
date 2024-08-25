@@ -20,27 +20,40 @@ class _SignInPageState extends State<SignInPage> {
     final username = _usernameController.text;
     final password = _passwordController.text;
 
-    await _dbHelper.printUsers();
+    final result = await _dbHelper.checkCredentials(username, password);
 
-    final isValid = await _dbHelper.checkCredentials(username, password);
+    if (result['valid']) {
+      final status = result['status'];
 
-    if (isValid) {
-      // Save login status in shared preferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isLoggedIn', true);
+      if (status == 'active') {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('username', username); // Store the username
 
-      // Handle successful login (e.g., navigate to another page)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login successful')),
-      );
-      Navigator.pushReplacementNamed(context, '/home');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login successful')),
+        );
+        Navigator.pushReplacementNamed(context, '/home');
+      } else if (status == 'blocked') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Your account is blocked')),
+        );
+      }
     } else {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Invalid username or password')),
-      );
+      if (result['status'] == 'user_not_found') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Username not found')),
+        );
+      } else if (result['status'] == 'invalid_password') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid password')),
+        );
+      }
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {

@@ -16,11 +16,18 @@ class _HomePageState extends State<HomePage> {
   Future<void> _handleLogout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('isLoggedIn');
+    await prefs.remove('username'); // Clear username if stored
+
     Navigator.pushReplacementNamed(context, '/login');
   }
 
-  void _showProductDetails(BuildContext context, String productName, String imageUrl) {
-    final screenWidth = MediaQuery.of(context).size.width;
+
+  void _showProductDetails(BuildContext context, String productName,
+      String imageUrl) {
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
@@ -29,14 +36,14 @@ class _HomePageState extends State<HomePage> {
     double imageHeight;
 
     if (isSmallScreen) {
-      imageWidth = screenWidth * 0.8; // 80% of screen width for small screens
-      imageHeight = 300; // Adjust height for small screens
+      imageWidth = screenWidth * 0.9; // 80% of screen width for small screens
+      imageHeight = 350; // Adjust height for small screens
     } else if (isMediumScreen) {
-      imageWidth = screenWidth * 0.9; // 90% of screen width for medium screens
-      imageHeight = 600; // Adjust height for medium screens
+      imageWidth = screenWidth * 0.8; // 90% of screen width for medium screens
+      imageHeight = 650; // Adjust height for medium screens
     } else if (isLargeScreen) {
       imageWidth = screenWidth * 0.6; // 90% of screen width for large screens
-      imageHeight = 600; // Adjust height for large screens
+      imageHeight = 750; // Adjust height for large screens
     } else {
       imageWidth = screenWidth * 0.85; // Default width
       imageHeight = 500; // Default height
@@ -62,9 +69,11 @@ class _HomePageState extends State<HomePage> {
                     fit: BoxFit.cover,
                     placeholder: (context, url) =>
                         Center(child: CircularProgressIndicator()),
-                    errorWidget: (context, url, error) => Center(
-                      child: Text('No Image', style: TextStyle(color: Colors.white)),
-                    ),
+                    errorWidget: (context, url, error) =>
+                        Center(
+                          child: Text('No Image', style: TextStyle(
+                              color: Colors.white)),
+                        ),
                   ),
                 )
                     : Container(
@@ -77,7 +86,9 @@ class _HomePageState extends State<HomePage> {
                 Text(
                   productName,
                   style: TextStyle(
-                    fontSize: isSmallScreen ? 18.0 : isMediumScreen ? 22.0 : 24.0,
+                    fontSize: isSmallScreen ? 18.0 : isMediumScreen
+                        ? 22.0
+                        : 24.0,
                     color: Colors.white,
                   ),
                 ),
@@ -98,7 +109,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
@@ -155,7 +169,9 @@ class _HomePageState extends State<HomePage> {
                   hintText: 'Type something',
                   hintStyle: TextStyle(
                     color: Colors.white,
-                    fontSize: isSmallScreen ? 12.0 : isMediumScreen ? 16.0 : 22.0,
+                    fontSize: isSmallScreen ? 12.0 : isMediumScreen
+                        ? 16.0
+                        : 22.0,
                   ),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
@@ -211,7 +227,8 @@ class _HomePageState extends State<HomePage> {
                             return GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  _selectedCategoryId = category['category_id'] == _selectedCategoryId
+                                  _selectedCategoryId =
+                                  category['category_id'] == _selectedCategoryId
                                       ? null
                                       : category['category_id'];
                                 });
@@ -251,7 +268,7 @@ class _HomePageState extends State<HomePage> {
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 8.0,
                         mainAxisSpacing: 8.0,
-                        childAspectRatio: 1,
+                        childAspectRatio: 0.8, // Adjust this ratio to match your card's aspect ratio
                       ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
@@ -277,14 +294,19 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
+
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCategoryChip(BuildContext context, String category, bool isActive) {
-    final screenWidth = MediaQuery.of(context).size.width;
+  Widget _buildCategoryChip(BuildContext context, String category,
+      bool isActive) {
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
@@ -303,41 +325,77 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, String productName, String imageUrl, int categoryId) {
+  Widget _buildProductCard(BuildContext context, String productName,
+      String imageUrl, int categoryId) {
+    // Determine the screen width
+    final screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+    final isSmallScreen = screenWidth < 600;
+    final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
+    final isLargeScreen = screenWidth >= 900;
+
+    // Set the card height based on screen size
+    double imageHeight;
+    double fontSizeName;
+    if (isSmallScreen) {
+      imageHeight = 165;
+      fontSizeName = 10; // Height for small screens
+    } else if (isMediumScreen) {
+      imageHeight = 250;
+      fontSizeName = 15; // Height for medium screens
+    } else {
+      imageHeight = 300;
+      fontSizeName = 18; // Height for large screens
+    }
+
     return Card(
       color: Colors.red[900],
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: imageUrl.isNotEmpty
-                ? CachedNetworkImage(
-              imageUrl: imageUrl,
-              fit: BoxFit.cover,
+      child: SizedBox(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: imageHeight,
+              // Set height of the image section
               width: double.infinity,
-              placeholder: (context, url) =>
-                  Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => Center(
-                child: Text('No Image', style: TextStyle(color: Colors.white)),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(
+                    10)), // Add border radius to the top corners
               ),
-            )
-                : Container(
-              color: Colors.grey,
-              width: double.infinity,
-              child: Center(child: Text('No Image')),
+              clipBehavior: Clip.antiAlias,
+              // Ensure the image respects the border radius
+              child: imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) =>
+                    Center(child: CircularProgressIndicator()),
+                errorWidget: (context, url, error) =>
+                    Center(child: Text(
+                        'No Image', style: TextStyle(color: Colors.white))),
+              )
+                  : Container(
+                color: Colors.grey,
+                child: Center(child: Text(
+                    'No Image', style: TextStyle(color: Colors.white))),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              productName,
-              style: const TextStyle(color: Colors.white),
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Center(
+                child: Text(
+                  productName,
+                  style: TextStyle(color: Colors.white, fontSize: fontSizeName),
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
