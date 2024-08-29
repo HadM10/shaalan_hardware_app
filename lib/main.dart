@@ -17,8 +17,6 @@ void main() async {
     await syncProducts();
     await syncCategories();
     await handleBlockedUsers(); // Check and handle if user is blocked
-  } else {
-    print('No internet connection. Running offline.');
   }
 
   // Check if user is signed in

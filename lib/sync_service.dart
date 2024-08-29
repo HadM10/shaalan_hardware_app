@@ -7,7 +7,7 @@ import 'database_helper.dart';
 Future<void> syncUsers() async {
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult != ConnectivityResult.none) {
-    final url = 'http://192.168.1.9/shaalan_catalogue/api/get_users.php';
+    final url = 'https://shaalanforhardware-f7728d963cd9.herokuapp.com/api/get_users.php';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -15,9 +15,6 @@ Future<void> syncUsers() async {
 
         // Fetch local users
         List<Map<String, dynamic>> localUsers = await DatabaseHelper().fetchUsers();
-
-        print('Remote Users: $users'); // Debug print
-        print('Local Users: $localUsers'); // Debug print
 
         for (var user in users) {
           int userId = int.parse(user['user_id']);
@@ -30,32 +27,21 @@ Future<void> syncUsers() async {
 
           if (exists) {
             // Update existing user
-            print('Updating user $userId with status $status'); // Debug print
             await DatabaseHelper().updateUserStatus(userId, status);
           } else {
             // Insert new user
-            print('Inserting new user $userId with status $status'); // Debug print
             await DatabaseHelper().insertUser(userId, username, password, status);
           }
         }
 
-        // Optionally print users after syncing
-        await DatabaseHelper().printUsers();
-        print('Users synced successfully');
-
         // Check for blocked users and handle them
         await handleBlockedUsers();
-      } else {
-        print('Failed to fetch users');
       }
     } catch (e) {
-      print('Error: $e');
+      // Handle error silently or log using a logger
     }
-  } else {
-    print('No internet connection. Running offline.');
   }
 }
-
 
 Future<void> handleBlockedUsers() async {
   // Fetch local users
@@ -71,32 +57,27 @@ Future<void> handleBlockedUsers() async {
         // Remove login status and navigate to login page
         await prefs.remove('isLoggedIn');
         await prefs.remove('username');
-        // Optionally clear other user-specific data
         // Navigate to login screen
         // Navigator.pushReplacementNamed(context, '/login');
-        print('User ${user['username']} is blocked. Logging out.');
       }
     }
   }
 }
 
-
 Future<void> syncCategories() async {
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult != ConnectivityResult.none) {
-    final url = 'http://192.168.1.9/shaalan_catalogue/api/view_categories.php';
+    final url = 'https://shaalanforhardware-f7728d963cd9.herokuapp.com/api/view_categories.php';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         List<dynamic> categories = jsonDecode(response.body);
-        print('Fetched categories: $categories'); // Debug print
 
         // Fetch local categories
         List<Map<String, dynamic>> localCategories = await DatabaseHelper().fetchCategories();
-        print('Local categories before sync: $localCategories'); // Debug print
 
         for (var category in categories) {
-          int categoryId =  category['category_id'] is int ? category['category_id'] : int.parse(category['category_id'].toString());
+          int categoryId = category['category_id'] is int ? category['category_id'] : int.parse(category['category_id'].toString());
           String categoryName = category['category_name'];
 
           // Check if the category exists locally
@@ -117,26 +98,17 @@ Future<void> syncCategories() async {
             await DatabaseHelper().deleteCategory(localCategory['category_id']);
           }
         }
-
-        // Optionally print categories after syncing
-        await DatabaseHelper().printCategories();
-        print('Categories synced successfully');
-      } else {
-        print('Failed to fetch categories. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      // Handle error silently or log using a logger
     }
-  } else {
-    print('No internet connection. Running offline.');
   }
 }
-
 
 Future<void> syncProducts() async {
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult != ConnectivityResult.none) {
-    final url = 'http://192.168.1.9/shaalan_catalogue/api/view_products.php';
+    final url = 'https://shaalanforhardware-f7728d963cd9.herokuapp.com/api/view_products.php';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -180,7 +152,7 @@ Future<void> syncProducts() async {
               );
             }
           } catch (e) {
-            print('Error processing product: $e');
+            // Handle error silently or log using a logger
           }
         }
 
@@ -190,18 +162,9 @@ Future<void> syncProducts() async {
             await DatabaseHelper().deleteProduct(localProduct['product_id']);
           }
         }
-
-        // Optionally print products after syncing
-        await DatabaseHelper().printProducts();
-        print('Products synced successfully');
-      } else {
-        print('Failed to fetch products');
       }
     } catch (e) {
-      print('Error: $e');
+      // Handle error silently or log using a logger
     }
-  } else {
-    print('No internet connection. Running offline.');
   }
 }
-

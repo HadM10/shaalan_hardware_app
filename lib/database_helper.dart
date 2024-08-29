@@ -278,36 +278,4 @@ class DatabaseHelper {
   }
 
 
-  Future<void> printUsers() async {
-    final db = await database;
-    final List<Map<String, dynamic>> users = await db.query('users');
-
-    if (users.isEmpty) {
-      print('No users found in the database.');
-    } else {
-      for (var user in users) {
-        print('User ID: ${user['user_id']}, Username: ${user['username']}, Password: ${user['password']}, Status: ${user['status']}');
-      }
-    }
-  }
-
-  Future<void> printCategories() async {
-    final db = await database;
-    List<Map<String, dynamic>> categories = await db.query('categories');
-    print('Categories in database: $categories');
-  }
-
-
-  Future<void> printProducts() async {
-    final db = await database;
-    final List<Map<String, dynamic>> products = await db.query('products');
-
-    if (products.isEmpty) {
-      print('No products found in the database.');
-    } else {
-      for (var product in products) {
-        print('Product ID: ${product['product_id']}, Product Name: ${product['product_name']}, Category ID: ${product['category_id']}, Image URL: ${product['image_url']}, Archived: ${product['archived']}, New Collection: ${product['new_collection']}');
-      }
-    }
-  }
 }

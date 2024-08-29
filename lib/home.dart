@@ -133,12 +133,15 @@ class _HomePageState extends State<HomePage> {
         appBar: AppBar(
           backgroundColor: Colors.black54,
           toolbarHeight: isSmallScreen ? 120 : isMediumScreen ? 200 : 200,
-          title: Center(
+          title: Padding(
+    padding: EdgeInsets.only(
+    left: 30,
+    ), child: Center(
             child: Image.asset(
               'assets/shaalan1.jpg',
               height: isSmallScreen ? 100 : isMediumScreen ? 150 : 200,
             ),
-          ),
+          ), ),
           actions: [
             Padding(
               padding: EdgeInsets.only(
@@ -268,7 +271,7 @@ class _HomePageState extends State<HomePage> {
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 8.0,
                         mainAxisSpacing: 8.0,
-                        childAspectRatio: 0.8, // Adjust this ratio to match your card's aspect ratio
+                        childAspectRatio: 0.79, // Adjust this ratio to match your card's aspect ratio
                       ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {

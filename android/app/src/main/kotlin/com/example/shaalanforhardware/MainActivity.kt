@@ -1,4 +1,4 @@
-package com.example.shaalan_hardware
+package com.shaalan.shaalanforhardware
 
 import io.flutter.embedding.android.FlutterActivity
 
