@@ -94,8 +94,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 SizedBox(height: 16.0),
                 ElevatedButton(
+                  style: ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(Colors.red[800]!)),
                   onPressed: () => Navigator.pop(context),
-                  child: Text('Close'),
+                  child: Text('Close', style: TextStyle(color: Colors.white)),
+
                 ),
                 SizedBox(height: 16.0),
               ],
@@ -116,12 +118,20 @@ class _HomePageState extends State<HomePage> {
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
-
+    double aspectRatio = 0.78;
     int crossAxisCount = 2;
     if (isMediumScreen) {
       crossAxisCount = 3;
     } else if (isLargeScreen) {
       crossAxisCount = 4;
+    }
+
+    if (isSmallScreen) {
+      aspectRatio = 0.77; // 80% of screen width for small screens
+    } else if (isMediumScreen) {
+      aspectRatio = 0.78; // 90% of screen width for medium screens
+    } else if (isLargeScreen) {
+      aspectRatio = 0.8; // 90% of screen width for large screens
     }
 
     return GestureDetector(
@@ -250,6 +260,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: DatabaseHelper().fetchProducts(
@@ -271,7 +282,7 @@ class _HomePageState extends State<HomePage> {
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 8.0,
                         mainAxisSpacing: 8.0,
-                        childAspectRatio: 0.79, // Adjust this ratio to match your card's aspect ratio
+                        childAspectRatio: aspectRatio, // Adjust this ratio to match your card's aspect ratio
                       ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
@@ -328,30 +339,35 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, String productName,
-      String imageUrl, int categoryId) {
+  Widget _buildProductCard(BuildContext context, String productName, String imageUrl, int categoryId) {
     // Determine the screen width
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+    final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
 
-    // Set the card height based on screen size
+    // Set the card height and font size based on screen size
     double imageHeight;
     double fontSizeName;
+    int maxNameLength;
     if (isSmallScreen) {
       imageHeight = 165;
-      fontSizeName = 10; // Height for small screens
+      fontSizeName = 11;
+      maxNameLength = 22; // Maximum characters for small screens
     } else if (isMediumScreen) {
       imageHeight = 250;
-      fontSizeName = 15; // Height for medium screens
+      fontSizeName = 15;
+      maxNameLength = 25; // Maximum characters for medium screens
     } else {
       imageHeight = 300;
-      fontSizeName = 18; // Height for large screens
+      fontSizeName = 18;
+      maxNameLength = 30; // Maximum characters for large screens
     }
+
+    // Truncate the product name if it exceeds the max length and add ellipsis
+    String displayProductName = productName.length > maxNameLength
+        ? productName.substring(0, maxNameLength) + '...'
+        : productName;
 
     return Card(
       color: Colors.red[900],
@@ -364,37 +380,36 @@ class _HomePageState extends State<HomePage> {
           children: [
             Container(
               height: imageHeight,
-              // Set height of the image section
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(
-                    10)), // Add border radius to the top corners
+                borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
               ),
               clipBehavior: Clip.antiAlias,
-              // Ensure the image respects the border radius
               child: imageUrl.isNotEmpty
                   ? CachedNetworkImage(
                 imageUrl: imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (context, url) =>
-                    Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) =>
-                    Center(child: Text(
-                        'No Image', style: TextStyle(color: Colors.white))),
+                placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                errorWidget: (context, url, error) => Center(
+                  child: Text('No Image', style: TextStyle(color: Colors.white)),
+                ),
               )
                   : Container(
                 color: Colors.grey,
-                child: Center(child: Text(
-                    'No Image', style: TextStyle(color: Colors.white))),
+                child: Center(child: Text('No Image', style: TextStyle(color: Colors.white))),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: Center(
-                child: Text(
-                  productName,
-                  style: TextStyle(color: Colors.white, fontSize: fontSizeName),
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                displayProductName,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: fontSizeName,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis, // Prevents overflow by showing ellipsis
               ),
             ),
           ],
@@ -402,4 +417,5 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
 }

@@ -74,13 +74,14 @@ class _SignInPageState extends State<SignInPage> {
             bool isSmallScreen = screenWidth < 600;
             bool isMediumScreen = screenWidth >= 600 && screenWidth < 900;
             bool isLargeScreen = screenWidth >= 900;
+            bool isTinyScreen = screenHeight <650;
 
             // Define the image and form heights based on the screen size category
             double imageHeight = isLargeScreen
                 ? 200
                 : isMediumScreen
                 ? 300
-                : 220;
+                : isTinyScreen? 135 :220;
             double formHeight = screenHeight - imageHeight;
 
             return SingleChildScrollView(
