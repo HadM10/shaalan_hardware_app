@@ -22,12 +22,8 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-  void _showProductDetails(BuildContext context, String productName,
-      String imageUrl) {
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+  void _showProductDetails(BuildContext context, String productName, String imageUrl) {
+    final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
@@ -36,13 +32,13 @@ class _HomePageState extends State<HomePage> {
     double imageHeight;
 
     if (isSmallScreen) {
-      imageWidth = screenWidth * 0.9; // 80% of screen width for small screens
+      imageWidth = screenWidth * 0.9; // 90% of screen width for small screens
       imageHeight = 350; // Adjust height for small screens
     } else if (isMediumScreen) {
-      imageWidth = screenWidth * 0.8; // 90% of screen width for medium screens
+      imageWidth = screenWidth * 0.8; // 80% of screen width for medium screens
       imageHeight = 650; // Adjust height for medium screens
     } else if (isLargeScreen) {
-      imageWidth = screenWidth * 0.6; // 90% of screen width for large screens
+      imageWidth = screenWidth * 0.6; // 60% of screen width for large screens
       imageHeight = 750; // Adjust height for large screens
     } else {
       imageWidth = screenWidth * 0.85; // Default width
@@ -60,36 +56,45 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                imageUrl.isNotEmpty
-                    ? Container(
-                  width: imageWidth, // Adjust the width based on screen size
-                  height: imageHeight, // Adjust the height based on screen size
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) =>
-                        Center(child: CircularProgressIndicator()),
-                    errorWidget: (context, url, error) =>
-                        Center(
-                          child: Text('No Image', style: TextStyle(
-                              color: Colors.white)),
-                        ),
+                Container(
+                  width: imageWidth, // Set the width for the entire container
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
-                )
-                    : Container(
-                  color: Colors.grey,
-                  width: imageWidth, // Adjust the width based on screen size
-                  height: imageHeight, // Adjust the height based on screen size
-                  child: Center(child: Text('No Image')),
-                ),
-                SizedBox(height: 16.0),
-                Text(
-                  productName,
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 18.0 : isMediumScreen
-                        ? 22.0
-                        : 24.0,
-                    color: Colors.white,
+                  child: Column(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
+                        child: imageUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          width: imageWidth,
+                          height: imageHeight,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Center(
+                              child: CircularProgressIndicator()),
+                          errorWidget: (context, url, error) => Center(
+                            child: Text('No Image', style: TextStyle(color: Colors.white)),
+                          ),
+                        )
+                            : Container(
+                          width: imageWidth,
+                          height: imageHeight,
+                          color: Colors.grey,
+                          child: Center(child: Text('No Image')),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          productName,
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 18.0 : isMediumScreen ? 22.0 : 24.0,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 16.0),
@@ -97,7 +102,6 @@ class _HomePageState extends State<HomePage> {
                   style: ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(Colors.red[800]!)),
                   onPressed: () => Navigator.pop(context),
                   child: Text('Close', style: TextStyle(color: Colors.white)),
-
                 ),
                 SizedBox(height: 16.0),
               ],
@@ -107,6 +111,7 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+
 
 
   @override
@@ -280,26 +285,69 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.all(16.0),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 8.0,
-                        mainAxisSpacing: 8.0,
-                        childAspectRatio: aspectRatio, // Adjust this ratio to match your card's aspect ratio
+                        crossAxisSpacing: 16.0,
+                        mainAxisSpacing: 16.0,
+                        childAspectRatio: aspectRatio,
                       ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) {
                         final product = snapshot.data![index];
+                        final productName = product['product_name'];
+                        final imageUrl = product['image_url'];
+
                         return GestureDetector(
-                          onTap: () {
-                            _showProductDetails(
-                              context,
-                              product['product_name'],
-                              product['image_url'],
-                            );
-                          },
-                          child: _buildProductCard(
+                          onTap: () => _showProductDetails(
                             context,
-                            product['product_name'],
-                            product['image_url'],
-                            product['category_id'],
+                            productName,
+                            imageUrl,
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10.0),
+                              color: Colors.red[900],
+                            ),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(10.0),
+                                    ),
+                                    child: imageUrl.isNotEmpty
+                                        ? CachedNetworkImage(
+                                      imageUrl: imageUrl,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Center(
+                                          child: CircularProgressIndicator()),
+                                      errorWidget: (context, url, error) =>
+                                          Center(child: Text('No Image')),
+                                    )
+                                        : Container(
+                                      color: Colors.grey,
+                                      child: Center(
+                                        child: Text('No Image'),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    productName,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isSmallScreen
+                                          ? 12.0
+                                          : isMediumScreen
+                                          ? 16.0
+                                          : 18.0,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
