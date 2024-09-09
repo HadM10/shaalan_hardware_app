@@ -202,7 +202,22 @@ class DatabaseHelper {
     return maps;
   }
 
+  Future<List<Map<String, dynamic>>> searchProducts(String searchQuery) async {
+    final db = await database;
 
+    // Building the WHERE clause and arguments for search query
+    String whereClause = 'archived = 0 AND product_name LIKE ?';
+    List<dynamic> whereArgs = ['%$searchQuery%'];
+
+    // Query the database with the search WHERE clause and arguments
+    final List<Map<String, dynamic>> maps = await db.query(
+      'products',
+      where: whereClause,
+      whereArgs: whereArgs,
+    );
+
+    return maps;
+  }
 
   Future<void> updateProduct(int productId, String productName, int categoryId, String imageUrl, int archived, int newCollection) async {
     final db = await database;

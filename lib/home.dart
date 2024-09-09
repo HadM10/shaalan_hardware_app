@@ -21,6 +21,9 @@ class _HomePageState extends State<HomePage> {
     Navigator.pushReplacementNamed(context, '/login');
   }
 
+  Future<List<Map<String, dynamic>>> searchProducts(String searchQuery) async {
+    return DatabaseHelper().searchProducts(searchQuery);
+  }
 
   void _showProductDetails(BuildContext context, String productName, String imageUrl) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -268,7 +271,9 @@ class _HomePageState extends State<HomePage> {
 
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: DatabaseHelper().fetchProducts(
+                future: _searchQuery.isNotEmpty
+                    ? searchProducts(_searchQuery)
+                    : DatabaseHelper().fetchProducts(
                   searchQuery: _searchQuery,
                   categoryId: _selectedCategoryId,
                   isNewCollection: _selectedCategoryId == null ? true : null,
@@ -356,7 +361,6 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
             ),
-
           ],
         ),
       ),
