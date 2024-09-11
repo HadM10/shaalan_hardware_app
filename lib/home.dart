@@ -12,6 +12,35 @@ class _HomePageState extends State<HomePage> {
   String _searchQuery = '';
   int? _selectedCategoryId;
   TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>>? _categories;
+  ScrollController _scrollController = ScrollController();
+
+
+  Future<void> _fetchCategories() async {
+    try {
+      final categories = await DatabaseHelper().fetchCategories();
+      setState(() {
+        _categories = categories;
+      });
+    } catch (error) {
+      // Handle or log the error appropriately, for example using a logging package
+      // Log.error('Error fetching categories: $error');
+    }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
 
   Future<void> _handleLogout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -219,55 +248,48 @@ class _HomePageState extends State<HomePage> {
               padding: EdgeInsets.all(8.0),
               child: Container(
                 height: 50,
-                child: FutureBuilder<List<Map<String, dynamic>>>(
-                  future: DatabaseHelper().fetchCategories(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(child: Text('No categories available'));
-                    } else {
-                      return ListView(
-                        scrollDirection: Axis.horizontal,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedCategoryId = null;
-                              });
-                            },
-                            child: _buildCategoryChip(
-                              context,
-                              'New Collection',
-                              _selectedCategoryId == null,
-                            ),
-                          ),
-                          ...snapshot.data!.map((category) {
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategoryId =
-                                  category['category_id'] == _selectedCategoryId
-                                      ? null
-                                      : category['category_id'];
-                                });
-                              },
-                              child: _buildCategoryChip(
-                                context,
-                                category['category_name'],
-                                _selectedCategoryId == category['category_id'],
-                              ),
-                            );
-                          }).toList(),
-                        ],
+                child: _categories == null
+                    ? Center(child: CircularProgressIndicator())
+                    : _categories!.isEmpty
+                    ? Center(child: Text('No categories available'))
+                    : ListView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategoryId = null;
+                        });
+                      },
+                      child: _buildCategoryChip(
+                        context,
+                        'New Collection',
+                        _selectedCategoryId == null,
+                      ),
+                    ),
+                    ..._categories!.map((category) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCategoryId =
+                            category['category_id'] == _selectedCategoryId
+                                ? null
+                                : category['category_id'];
+                          });
+                        },
+                        child: _buildCategoryChip(
+                          context,
+                          category['category_name'],
+                          _selectedCategoryId == category['category_id'],
+                        ),
                       );
-                    }
-                  },
+                    }).toList(),
+                  ],
                 ),
               ),
             ),
+
 
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
