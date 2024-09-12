@@ -14,20 +14,7 @@ class _HomePageState extends State<HomePage> {
   TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>>? _categories;
   ScrollController _scrollController = ScrollController();
-
-
-  Future<void> _fetchCategories() async {
-    try {
-      final categories = await DatabaseHelper().fetchCategories();
-      setState(() {
-        _categories = categories;
-      });
-    } catch (error) {
-      // Handle or log the error appropriately, for example using a logging package
-      // Log.error('Error fetching categories: $error');
-    }
-  }
-
+  Future<List<Map<String, dynamic>>>? _productsFuture;
 
   @override
   void initState() {
@@ -41,6 +28,29 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  Future<void> _fetchCategories() async {
+    try {
+      final categories = await DatabaseHelper().fetchCategories();
+      setState(() {
+        _categories = categories;
+        _updateProductsFuture();
+      });
+    } catch (error) {
+      // Handle or log the error appropriately
+    }
+  }
+
+  void _updateProductsFuture() {
+    setState(() {
+      _productsFuture = _searchQuery.isNotEmpty
+          ? DatabaseHelper().searchProducts(_searchQuery)
+          : DatabaseHelper().fetchProducts(
+        searchQuery: _searchQuery,
+        categoryId: _selectedCategoryId,
+        isNewCollection: _selectedCategoryId == null ? true : null,
+      );
+    });
+  }
 
   Future<void> _handleLogout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -48,10 +58,6 @@ class _HomePageState extends State<HomePage> {
     await prefs.remove('username'); // Clear username if stored
 
     Navigator.pushReplacementNamed(context, '/login');
-  }
-
-  Future<List<Map<String, dynamic>>> searchProducts(String searchQuery) async {
-    return DatabaseHelper().searchProducts(searchQuery);
   }
 
   void _showProductDetails(BuildContext context, String productName, String imageUrl) {
@@ -64,17 +70,14 @@ class _HomePageState extends State<HomePage> {
     double imageHeight;
 
     if (isSmallScreen) {
-      imageWidth = screenWidth * 0.9; // 90% of screen width for small screens
-      imageHeight = 350; // Adjust height for small screens
+      imageWidth = screenWidth * 0.9;
+      imageHeight = 350;
     } else if (isMediumScreen) {
-      imageWidth = screenWidth * 0.8; // 80% of screen width for medium screens
-      imageHeight = 650; // Adjust height for medium screens
-    } else if (isLargeScreen) {
-      imageWidth = screenWidth * 0.6; // 60% of screen width for large screens
-      imageHeight = 750; // Adjust height for large screens
+      imageWidth = screenWidth * 0.8;
+      imageHeight = 650;
     } else {
-      imageWidth = screenWidth * 0.85; // Default width
-      imageHeight = 500; // Default height
+      imageWidth = screenWidth * 0.6;
+      imageHeight = 750;
     }
 
     showDialog(
@@ -89,7 +92,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  width: imageWidth, // Set the width for the entire container
+                  width: imageWidth,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
@@ -103,8 +106,7 @@ class _HomePageState extends State<HomePage> {
                           width: imageWidth,
                           height: imageHeight,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Center(
-                              child: CircularProgressIndicator()),
+                          placeholder: (context, url) => Center(child: CircularProgressIndicator()),
                           errorWidget: (context, url, error) => Center(
                             child: Text('No Image', style: TextStyle(color: Colors.white)),
                           ),
@@ -144,14 +146,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+    final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
@@ -164,11 +161,11 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (isSmallScreen) {
-      aspectRatio = 0.77; // 80% of screen width for small screens
+      aspectRatio = 0.77;
     } else if (isMediumScreen) {
-      aspectRatio = 0.78; // 90% of screen width for medium screens
-    } else if (isLargeScreen) {
-      aspectRatio = 0.8; // 90% of screen width for large screens
+      aspectRatio = 0.78;
+    } else {
+      aspectRatio = 0.8;
     }
 
     return GestureDetector(
@@ -181,14 +178,14 @@ class _HomePageState extends State<HomePage> {
           backgroundColor: Colors.black54,
           toolbarHeight: isSmallScreen ? 120 : isMediumScreen ? 200 : 200,
           title: Padding(
-    padding: EdgeInsets.only(
-    left: 30,
-    ), child: Center(
-            child: Image.asset(
-              'assets/shaalan1.jpg',
-              height: isSmallScreen ? 100 : isMediumScreen ? 150 : 200,
+            padding: EdgeInsets.only(left: 30),
+            child: Center(
+              child: Image.asset(
+                'assets/shaalan1.jpg',
+                height: isSmallScreen ? 100 : isMediumScreen ? 150 : 200,
+              ),
             ),
-          ), ),
+          ),
           actions: [
             Padding(
               padding: EdgeInsets.only(
@@ -219,9 +216,7 @@ class _HomePageState extends State<HomePage> {
                   hintText: 'Type something',
                   hintStyle: TextStyle(
                     color: Colors.white,
-                    fontSize: isSmallScreen ? 12.0 : isMediumScreen
-                        ? 16.0
-                        : 22.0,
+                    fontSize: isSmallScreen ? 12.0 : isMediumScreen ? 16.0 : 22.0,
                   ),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
@@ -229,6 +224,7 @@ class _HomePageState extends State<HomePage> {
                       setState(() {
                         _searchController.clear();
                         _searchQuery = '';
+                        _updateProductsFuture();
                       });
                     },
                   ),
@@ -240,6 +236,7 @@ class _HomePageState extends State<HomePage> {
                 onChanged: (query) {
                   setState(() {
                     _searchQuery = query;
+                    _updateProductsFuture();
                   });
                 },
               ),
@@ -260,6 +257,7 @@ class _HomePageState extends State<HomePage> {
                       onTap: () {
                         setState(() {
                           _selectedCategoryId = null;
+                          _updateProductsFuture();
                         });
                       },
                       child: _buildCategoryChip(
@@ -276,6 +274,7 @@ class _HomePageState extends State<HomePage> {
                             category['category_id'] == _selectedCategoryId
                                 ? null
                                 : category['category_id'];
+                            _updateProductsFuture();
                           });
                         },
                         child: _buildCategoryChip(
@@ -289,17 +288,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-
-
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _searchQuery.isNotEmpty
-                    ? searchProducts(_searchQuery)
-                    : DatabaseHelper().fetchProducts(
-                  searchQuery: _searchQuery,
-                  categoryId: _selectedCategoryId,
-                  isNewCollection: _selectedCategoryId == null ? true : null,
-                ),
+                future: _productsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
@@ -344,16 +335,12 @@ class _HomePageState extends State<HomePage> {
                                         ? CachedNetworkImage(
                                       imageUrl: imageUrl,
                                       fit: BoxFit.cover,
-                                      placeholder: (context, url) => Center(
-                                          child: CircularProgressIndicator()),
-                                      errorWidget: (context, url, error) =>
-                                          Center(child: Text('No Image')),
+                                      placeholder: (context, url) => Center(child: CircularProgressIndicator()),
+                                      errorWidget: (context, url, error) => Center(child: Text('No Image')),
                                     )
                                         : Container(
                                       color: Colors.grey,
-                                      child: Center(
-                                        child: Text('No Image'),
-                                      ),
+                                      child: Center(child: Text('No Image')),
                                     ),
                                   ),
                                 ),
@@ -389,12 +376,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCategoryChip(BuildContext context, String category,
-      bool isActive) {
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+  Widget _buildCategoryChip(BuildContext context, String category, bool isActive) {
+    final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 600;
     final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
     final isLargeScreen = screenWidth >= 900;
@@ -412,84 +395,4 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  Widget _buildProductCard(BuildContext context, String productName, String imageUrl, int categoryId) {
-    // Determine the screen width
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 600;
-    final isMediumScreen = screenWidth >= 600 && screenWidth < 900;
-    final isLargeScreen = screenWidth >= 900;
-
-    // Set the card height and font size based on screen size
-    double imageHeight;
-    double fontSizeName;
-    int maxNameLength;
-    if (isSmallScreen) {
-      imageHeight = 165;
-      fontSizeName = 11;
-      maxNameLength = 22; // Maximum characters for small screens
-    } else if (isMediumScreen) {
-      imageHeight = 250;
-      fontSizeName = 15;
-      maxNameLength = 25; // Maximum characters for medium screens
-    } else {
-      imageHeight = 300;
-      fontSizeName = 18;
-      maxNameLength = 30; // Maximum characters for large screens
-    }
-
-    // Truncate the product name if it exceeds the max length and add ellipsis
-    String displayProductName = productName.length > maxNameLength
-        ? productName.substring(0, maxNameLength) + '...'
-        : productName;
-
-    return Card(
-      color: Colors.red[900],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: SizedBox(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: imageHeight,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: imageUrl.isNotEmpty
-                  ? CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) => Center(
-                  child: Text('No Image', style: TextStyle(color: Colors.white)),
-                ),
-              )
-                  : Container(
-                color: Colors.grey,
-                child: Center(child: Text('No Image', style: TextStyle(color: Colors.white))),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                displayProductName,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: fontSizeName,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis, // Prevents overflow by showing ellipsis
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
 }
