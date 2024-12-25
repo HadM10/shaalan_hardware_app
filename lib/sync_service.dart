@@ -7,7 +7,7 @@ import 'database_helper.dart';
 Future<void> syncUsers() async {
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult != ConnectivityResult.none) {
-    final url = 'https://shaalanforhardware-f7728d963cd9.herokuapp.com/api/get_users.php';
+    final url = 'https://shaalanforhardware-843abba819dd.herokuapp.com/api/get_users.php';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -67,7 +67,7 @@ Future<void> handleBlockedUsers() async {
 Future<void> syncCategories() async {
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult != ConnectivityResult.none) {
-    final url = 'https://shaalanforhardware-f7728d963cd9.herokuapp.com/api/view_categories.php';
+    final url = 'https://shaalanforhardware-843abba819dd.herokuapp.com/api/view_categories.php';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -108,7 +108,7 @@ Future<void> syncCategories() async {
 Future<void> syncProducts() async {
   var connectivityResult = await Connectivity().checkConnectivity();
   if (connectivityResult != ConnectivityResult.none) {
-    final url = 'https://shaalanforhardware-f7728d963cd9.herokuapp.com/api/view_products.php';
+    final url = 'https://shaalanforhardware-843abba819dd.herokuapp.com/api/view_products.php';
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
