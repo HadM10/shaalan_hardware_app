@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dio/dio.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:typed_data';
 import 'database_helper.dart';
 
 class HomePage extends StatefulWidget {
@@ -58,6 +62,54 @@ class _HomePageState extends State<HomePage> {
     await prefs.remove('username'); // Clear username if stored
 
     Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  Future<void> _downloadImage(BuildContext context, String imageUrl, String productName) async {
+    try {
+      // Request appropriate permissions based on Android version
+      bool permissionGranted = false;
+      
+      if (await Permission.storage.request().isGranted) {
+        permissionGranted = true;
+      } else if (await Permission.photos.request().isGranted) {
+        // For Android 13+
+        permissionGranted = true;
+      } else if (await Permission.mediaLibrary.request().isGranted) {
+        // Alternative permission for some devices
+        permissionGranted = true;
+      }
+      
+      if (permissionGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Downloading image...')),
+        );
+        
+        // Download image
+        var response = await Dio().get(
+          imageUrl,
+          options: Options(responseType: ResponseType.bytes),
+        );
+        
+        // Save to gallery
+        final result = await ImageGallerySaver.saveImage(
+          Uint8List.fromList(response.data),
+          name: 'shaalan_${productName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}',
+          quality: 100,
+        );
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Image saved to gallery')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Storage permission denied. Please grant permission in app settings.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to download image: $e')),
+      );
+    }
   }
 
   void _showProductDetails(BuildContext context, String productName, String imageUrl) {
@@ -132,10 +184,23 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 SizedBox(height: 16.0),
-                ElevatedButton(
-                  style: ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(Colors.red[800]!)),
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Close', style: TextStyle(color: Colors.white)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      style: ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(Colors.red[800]!)),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Close', style: TextStyle(color: Colors.white)),
+                    ),
+                    SizedBox(width: 16.0),
+                    if (imageUrl.isNotEmpty)
+                      ElevatedButton.icon(
+                        style: ButtonStyle(backgroundColor: MaterialStatePropertyAll<Color>(Colors.red[800]!)),
+                        onPressed: () => _downloadImage(context, imageUrl, productName),
+                        icon: Icon(Icons.download, color: Colors.white),
+                        label: Text('Download', style: TextStyle(color: Colors.white)),
+                      ),
+                  ],
                 ),
                 SizedBox(height: 16.0),
               ],
@@ -344,21 +409,34 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    productName,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: isSmallScreen
-                                          ? 12.0
-                                          : isMediumScreen
-                                          ? 16.0
-                                          : 18.0,
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Text(
+                                          productName,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: isSmallScreen
+                                                ? 12.0
+                                                : isMediumScreen
+                                                ? 16.0
+                                                : 18.0,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
                                     ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
+                                    if (imageUrl.isNotEmpty)
+                                      IconButton(
+                                        icon: Icon(Icons.download, color: Colors.white),
+                                        onPressed: () => _downloadImage(context, imageUrl, productName),
+                                        tooltip: 'Download image',
+                                      ),
+                                  ],
                                 ),
                               ],
                             ),
